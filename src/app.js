@@ -12,6 +12,7 @@ import {
   fetchHistory,
   fetchState,
   removeEntry,
+  saveExercise,
   saveWeight,
 } from "./api.js";
 import { drawTrend } from "./trends.js";
@@ -28,6 +29,7 @@ let history = [];
 let currentDate = todayKey();
 let activeMeal = "breakfast";
 let selectedFood = BUILT_IN_FOODS[0];
+let currentExercise = 0;
 let foodSearchComposing = false;
 let toastTimer = null;
 
@@ -38,6 +40,7 @@ const elements = {
   macroGrid: $("#macroGrid"),
   insight: $("#insight"),
   weightCard: $("#weightCard"),
+  exerciseCard: $("#exerciseCard"),
   trendCard: $("#trendCard"),
   mealActions: $("#mealActions"),
   mealList: $("#mealList"),
@@ -61,6 +64,7 @@ async function loadFromServer() {
   state.customFoods = serverState.customFoods || [];
   state.targets = serverState.targets || DEFAULT_TARGETS;
   currentWeight = serverState.weight?.weight || null;
+  currentExercise = Number(serverState.exercise?.calories || 0);
   history = await fetchHistory(historyDays);
   render();
 }
@@ -107,11 +111,12 @@ function showToast(message) {
 }
 
 function render() {
-  const summary = summarizeDay(dayRecord(), state.targets || DEFAULT_TARGETS);
+  const summary = summarizeDay(dayRecord(), state.targets || DEFAULT_TARGETS, currentExercise);
   renderDashboard(summary);
   renderMacros(summary);
   renderInsight(summary);
   renderWeightCard();
+  renderExerciseCard(summary);
   renderTrendCard();
   renderMealActions();
   renderMealList();
@@ -119,8 +124,8 @@ function render() {
 
 function renderDashboard(summary) {
   const target = state.targets.calories;
-  const remaining = Math.max(0, Math.round(target.max - summary.totals.calories));
-  const percent = progressPercent(summary.totals.calories, target.max);
+  const remaining = Math.max(0, Math.round(target.max - summary.netCalories));
+  const percent = progressPercent(summary.netCalories, target.max);
   elements.dashboard.innerHTML = `
     <div class="hero-row">
       <div>
@@ -134,7 +139,7 @@ function renderDashboard(summary) {
       <div class="progress-fill" style="width:${percent}%"></div>
     </div>
     <p class="status-copy" style="margin-top:10px">
-      已摄入 ${summary.totals.calories} kcal / 目标 ${target.min}-${target.max} kcal
+      已摄入 ${summary.totals.calories} kcal · 运动消耗 ${summary.exerciseCalories} kcal · 净摄入 ${summary.netCalories} kcal
     </p>
   `;
 }
@@ -201,6 +206,21 @@ function renderWeightCard() {
   `;
 }
 
+function renderExerciseCard(summary) {
+  elements.exerciseCard.innerHTML = `
+    <div class="weight-row">
+      <div>
+        <p class="micro-label">运动消耗</p>
+        <h2>${summary.exerciseCalories} kcal</h2>
+      </div>
+      <form class="weight-form" id="exerciseForm">
+        <input class="input weight-input" name="calories" type="number" min="0" max="3000" step="1" placeholder="300" value="${summary.exerciseCalories || ""}" />
+        <button class="mini-button" type="submit">保存</button>
+      </form>
+    </div>
+  `;
+}
+
 function renderTrendCard() {
   elements.trendCard.innerHTML = `
     <div class="trend-head">
@@ -216,6 +236,7 @@ function renderTrendCard() {
     <div class="chart-grid">
       <canvas class="trend-canvas" data-chart="weight" aria-label="体重趋势"></canvas>
       <canvas class="trend-canvas" data-chart="calories" aria-label="热量趋势"></canvas>
+      <canvas class="trend-canvas" data-chart="exercise" aria-label="运动消耗趋势"></canvas>
       <canvas class="trend-canvas" data-chart="protein" aria-label="蛋白质趋势"></canvas>
       <canvas class="trend-canvas" data-chart="carbs" aria-label="碳水趋势"></canvas>
       <canvas class="trend-canvas" data-chart="fat" aria-label="脂肪趋势"></canvas>
@@ -224,6 +245,7 @@ function renderTrendCard() {
   const labels = {
     weight: "体重 kg",
     calories: "热量 kcal",
+    exercise: "运动消耗 kcal",
     protein: "蛋白质 g",
     carbs: "碳水 g",
     fat: "脂肪 g",
@@ -543,6 +565,15 @@ document.addEventListener("submit", (event) => {
       return;
     }
     saveWeight(currentDate, weight).then(loadFromServer).catch((error) => alert(error.message));
+  }
+  if (event.target.id === "exerciseForm") {
+    event.preventDefault();
+    const calories = Number(new FormData(event.target).get("calories"));
+    if (!Number.isFinite(calories) || calories < 0) {
+      alert("请输入有效运动消耗。");
+      return;
+    }
+    saveExercise(currentDate, calories).then(loadFromServer).catch((error) => alert(error.message));
   }
 });
 

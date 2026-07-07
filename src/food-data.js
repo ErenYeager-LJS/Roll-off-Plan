@@ -31,4 +31,12 @@ export const BUILT_IN_FOODS = [
   { id: "tomato", name: "番茄", category: "蔬菜", serving: "150g", defaultGrams: 150, calories: 18, protein: 0.9, carbs: 3.9, fat: 0.2 },
   { id: "carrot", name: "胡萝卜丁", category: "蔬菜", serving: "50g", defaultGrams: 50, calories: 41, protein: 0.9, carbs: 9.6, fat: 0.2 },
   { id: "onion", name: "洋葱丝", category: "蔬菜", serving: "50g", defaultGrams: 50, calories: 40, protein: 1.1, carbs: 9.3, fat: 0.1 },
+  { id: "cooking-oil", name: "食用油", category: "调味料", serving: "10g", defaultGrams: 10, calories: 884, protein: 0, carbs: 0, fat: 100 },
+  { id: "soy-sauce", name: "生抽/酱油", category: "调味料", serving: "10g", defaultGrams: 10, calories: 53, protein: 8.0, carbs: 4.9, fat: 0.1 },
+  { id: "oyster-sauce", name: "蚝油", category: "调味料", serving: "10g", defaultGrams: 10, calories: 114, protein: 3.5, carbs: 22.0, fat: 0.3 },
+  { id: "cooking-wine", name: "料酒", category: "调味料", serving: "10g", defaultGrams: 10, calories: 66, protein: 0.3, carbs: 3.0, fat: 0 },
+  { id: "garlic-paste", name: "蒜泥", category: "调味料", serving: "10g", defaultGrams: 10, calories: 149, protein: 6.4, carbs: 33.1, fat: 0.5 },
+  { id: "cumin-powder", name: "孜然粉", category: "调味料", serving: "2g", defaultGrams: 2, calories: 375, protein: 18.0, carbs: 44.0, fat: 22.0 },
+  { id: "sugar", name: "白糖", category: "调味料", serving: "5g", defaultGrams: 5, calories: 400, protein: 0, carbs: 100, fat: 0 },
+  { id: "starch", name: "淀粉", category: "调味料", serving: "10g", defaultGrams: 10, calories: 350, protein: 0.2, carbs: 86.0, fat: 0.1 },
 ];

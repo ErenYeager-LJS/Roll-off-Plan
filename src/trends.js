@@ -1,6 +1,7 @@
 const COLORS = {
   weight: "#60a5fa",
   calories: "#fbbf24",
+  exercise: "#a78bfa",
   protein: "#34d399",
   carbs: "#fde68a",
   fat: "#fb7185",
@@ -71,4 +72,3 @@ export function drawTrend(canvas, history, key, label) {
     ctx.fill();
   }
 }
-

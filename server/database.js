@@ -86,6 +86,13 @@ export function createDatabase(path) {
       updated_at TEXT NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS exercise (
+      date TEXT PRIMARY KEY,
+      calories REAL NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
     CREATE TABLE IF NOT EXISTS settings (
       key TEXT PRIMARY KEY,
       value TEXT NOT NULL
@@ -127,6 +134,7 @@ export function createDatabase(path) {
     clearDay(date) {
       db.prepare("DELETE FROM entries WHERE date = ?").run(date);
       db.prepare("DELETE FROM weights WHERE date = ?").run(date);
+      db.prepare("DELETE FROM exercise WHERE date = ?").run(date);
     },
 
     addCustomFood(food) {
@@ -160,6 +168,16 @@ export function createDatabase(path) {
       return { date, weight };
     },
 
+    saveExercise({ date, calories }) {
+      const now = new Date().toISOString();
+      db.prepare(`
+        INSERT INTO exercise (date, calories, created_at, updated_at)
+        VALUES (?, ?, ?, ?)
+        ON CONFLICT(date) DO UPDATE SET calories = excluded.calories, updated_at = excluded.updated_at
+      `).run(date, calories, now, now);
+      return { date, calories };
+    },
+
     getState(date) {
       const day = { breakfast: [], lunch: [], dinner: [] };
       const rows = db.prepare("SELECT * FROM entries WHERE date = ? ORDER BY created_at ASC").all(date);
@@ -168,11 +186,13 @@ export function createDatabase(path) {
       }
       const customFoods = db.prepare("SELECT * FROM custom_foods ORDER BY created_at ASC").all().map(rowToFood);
       const weight = db.prepare("SELECT date, weight FROM weights WHERE date = ?").get(date) || null;
+      const exercise = db.prepare("SELECT date, calories FROM exercise WHERE date = ?").get(date) || null;
       const targetsRow = db.prepare("SELECT value FROM settings WHERE key = 'targets'").get();
       return {
         day,
         customFoods,
         weight,
+        exercise,
         targets: parseJson(targetsRow?.value, DEFAULT_TARGETS),
       };
     },
@@ -184,6 +204,8 @@ export function createDatabase(path) {
           SELECT date FROM entries
           UNION
           SELECT date FROM weights
+          UNION
+          SELECT date FROM exercise
         )
         SELECT
           d.date,
@@ -191,11 +213,13 @@ export function createDatabase(path) {
           COALESCE(SUM(e.protein), 0) AS protein,
           COALESCE(SUM(e.carbs), 0) AS carbs,
           COALESCE(SUM(e.fat), 0) AS fat,
-          w.weight AS weight
+          w.weight AS weight,
+          x.calories AS exercise
         FROM dates d
         LEFT JOIN entries e ON e.date = d.date
         LEFT JOIN weights w ON w.date = d.date
-        GROUP BY d.date, w.weight
+        LEFT JOIN exercise x ON x.date = d.date
+        GROUP BY d.date, w.weight, x.calories
         ORDER BY d.date DESC
         LIMIT ?
       `).all(limit).reverse();
@@ -206,4 +230,3 @@ export function createDatabase(path) {
     },
   };
 }
-

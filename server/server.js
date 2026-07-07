@@ -73,6 +73,13 @@ async function handleApi(req, res, url) {
       return sendJson(res, 200, db.saveWeight(body));
     }
 
+    if (req.method === "POST" && url.pathname === "/api/exercise") {
+      const body = await readJson(req);
+      const calories = Number(body.calories);
+      if (!body.date || !Number.isFinite(calories) || calories < 0) return badRequest(res, "invalid exercise");
+      return sendJson(res, 200, db.saveExercise({ date: body.date, calories }));
+    }
+
     if (req.method === "DELETE" && url.pathname.startsWith("/api/day/")) {
       db.clearDay(decodeURIComponent(url.pathname.split("/").pop()));
       return sendJson(res, 200, { ok: true });
@@ -114,4 +121,3 @@ const app = createServer((req, res) => {
 app.listen(port, host, () => {
   console.log(`营养记录器服务已启动: http://localhost:${port}/`);
 });
-

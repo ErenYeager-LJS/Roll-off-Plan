@@ -82,3 +82,26 @@ test("entry sheet keeps close button and search bar sticky while scrolling foods
   assert.match(stylesSource, /position: sticky/);
   assert.match(stylesSource, /top: 0/);
 });
+
+test("built-in foods include cooking oil and common condiments", async () => {
+  const foodSource = await readFile(new URL("../src/food-data.js", import.meta.url), "utf8");
+
+  assert.match(foodSource, /cooking-oil/);
+  assert.match(foodSource, /soy-sauce/);
+  assert.match(foodSource, /oyster-sauce/);
+  assert.match(foodSource, /cumin-powder/);
+  assert.match(foodSource, /category: "调味料"/);
+});
+
+test("UI records simple exercise calories", async () => {
+  const appSource = await readFile(new URL("../src/app.js", import.meta.url), "utf8");
+  const apiSource = await readFile(new URL("../src/api.js", import.meta.url), "utf8");
+  const indexSource = await readFile(new URL("../index.html", import.meta.url), "utf8");
+
+  assert.match(indexSource, /id="exerciseCard"/);
+  assert.match(appSource, /renderExerciseCard/);
+  assert.match(appSource, /id="exerciseForm"/);
+  assert.match(appSource, /运动消耗/);
+  assert.match(appSource, /saveExercise\(currentDate, calories\)/);
+  assert.match(apiSource, /api\/exercise/);
+});

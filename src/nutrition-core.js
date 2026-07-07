@@ -43,15 +43,19 @@ export function emptyDay() {
   return { breakfast: [], lunch: [], dinner: [] };
 }
 
-export function summarizeDay(day, targets) {
+export function summarizeDay(day, targets, exerciseCalories = 0) {
   const entries = MEALS.flatMap((meal) =>
     (day?.[meal] || []).map((entry) => entry.macros || entry),
   );
   const totals = sumEntries(entries);
+  const exercise = Math.max(0, Math.round(Number(exerciseCalories || 0)));
+  const netCalories = Math.max(0, Math.round(totals.calories - exercise));
   return {
     totals,
+    exerciseCalories: exercise,
+    netCalories,
     status: {
-      calories: getMacroStatus(totals.calories, targets.calories, "kcal"),
+      calories: getMacroStatus(netCalories, targets.calories, "kcal"),
       protein: getMacroStatus(totals.protein, targets.protein, "g"),
       carbs: getMacroStatus(totals.carbs, targets.carbs, "g"),
       fat: getMacroStatus(totals.fat, targets.fat, "g"),

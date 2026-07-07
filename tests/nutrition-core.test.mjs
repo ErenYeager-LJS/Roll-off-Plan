@@ -69,3 +69,21 @@ test("summarizeDay combines breakfast lunch and dinner", () => {
   assert.equal(summary.status.carbs.state, "low");
   assert.equal(summary.status.fat.state, "low");
 });
+
+test("summarizeDay includes exercise calories and net calories", () => {
+  const day = {
+    breakfast: [{ macros: { calories: 500, protein: 25, carbs: 70, fat: 12 } }],
+    lunch: [],
+    dinner: [],
+  };
+  const summary = summarizeDay(day, {
+    calories: { min: 2000, max: 2200 },
+    protein: { min: 95, max: 115 },
+    carbs: { min: 260, max: 330 },
+    fat: { min: 55, max: 75 },
+  }, 180);
+
+  assert.equal(summary.exerciseCalories, 180);
+  assert.equal(summary.netCalories, 320);
+  assert.equal(summary.status.calories.state, "low");
+});

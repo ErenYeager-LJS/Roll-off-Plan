@@ -43,7 +43,13 @@ export function saveWeight(date, weight) {
   });
 }
 
+export function saveExercise(date, calories) {
+  return request("/api/exercise", {
+    method: "POST",
+    body: JSON.stringify({ date, calories }),
+  });
+}
+
 export function clearDay(date) {
   return request(`/api/day/${encodeURIComponent(date)}`, { method: "DELETE" });
 }
-

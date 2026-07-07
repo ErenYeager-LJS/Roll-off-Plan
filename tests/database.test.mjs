@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { createDatabase } from "../server/database.js";
 
-test("database stores entries, custom foods, weights, and history", async () => {
+test("database stores entries, custom foods, weights, exercise, and history", async () => {
   const dir = await mkdtemp(join(tmpdir(), "nutrition-db-"));
   const dbPath = join(dir, "test.db");
   try {
@@ -32,17 +32,20 @@ test("database stores entries, custom foods, weights, and history", async () => 
       fat: 8,
     });
     db.saveWeight({ date: "2026-07-07", weight: 91.2 });
+    db.saveExercise({ date: "2026-07-07", calories: 320 });
 
     const state = db.getState("2026-07-07");
     assert.equal(state.customFoods[0].name, "测试牛肉饭");
     assert.equal(state.day.lunch[0].id, entry.id);
     assert.equal(state.weight.weight, 91.2);
+    assert.equal(state.exercise.calories, 320);
 
     const history = db.getHistory(7);
     assert.equal(history.length, 1);
     assert.equal(history[0].date, "2026-07-07");
     assert.equal(history[0].calories, 320);
     assert.equal(history[0].weight, 91.2);
+    assert.equal(history[0].exercise, 320);
 
     db.close();
   } finally {
