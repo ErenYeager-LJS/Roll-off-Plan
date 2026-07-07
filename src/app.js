@@ -325,7 +325,7 @@ function renderEntrySheet(query = "", options = {}) {
                 <div class="inline-entry-panel ${food.id === selectedFood.id ? "" : "hide"}">
                   <label class="form-field">
                     <span>重量 g/ml</span>
-                    <input class="input" id="gramsInput" type="number" min="1" step="1" value="${food.defaultGrams || 100}" />
+                    <input class="input" data-grams-input type="number" min="1" step="1" value="${food.defaultGrams || 100}" />
                   </label>
                   <button class="primary-button" type="button" data-add-entry>添加到${MEAL_LABELS[activeMeal]}</button>
                 </div>
@@ -397,7 +397,8 @@ function openCustomFoodSheet() {
 }
 
 async function addSelectedEntry() {
-  const grams = Number($("#gramsInput")?.value);
+  const query = $("#foodSearch")?.value || "";
+  const grams = Number(elements.entrySheet.querySelector(".food-item.active [data-grams-input]")?.value);
   if (!Number.isFinite(grams) || grams <= 0) {
     alert("请输入大于 0 的重量。");
     return;
@@ -414,8 +415,8 @@ async function addSelectedEntry() {
     carbs: macros.carbs,
     fat: macros.fat,
   });
-  elements.entrySheet.close();
   await loadFromServer();
+  renderEntrySheet(query, { preserveScroll: true });
 }
 
 async function addCustomFood(form) {
