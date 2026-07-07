@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#12110f" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="营养记录器" />
+    <title>营养记录器</title>
+    <link rel="icon" href="./icons/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Nutrition</p>
+          <h1>营养记录器</h1>
+        </div>
+        <button class="ghost-button" id="todayButton" type="button">今天</button>
+      </header>
+
+      <section class="hero-card" id="dashboard"></section>
+      <section class="macro-grid" id="macroGrid" aria-label="三大营养素"></section>
+      <section class="insight-card" id="insight"></section>
+      <section class="meal-actions" id="mealActions"></section>
+      <section class="meal-list" id="mealList"></section>
+    </main>
+
+    <dialog class="sheet" id="entrySheet"></dialog>
+    <dialog class="sheet" id="customFoodSheet"></dialog>
+
+    <script type="module" src="./src/app.js"></script>
+  </body>
+</html>
