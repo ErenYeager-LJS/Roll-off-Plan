@@ -1,4 +1,4 @@
-const CACHE_NAME = "nutrition-pwa-v2";
+const CACHE_NAME = "nutrition-pwa-v3";
 const ASSETS = [
   "./",
   "./index.html",
@@ -8,9 +8,11 @@ const ASSETS = [
   "./icons/icon-512.png",
   "./icons/apple-touch-icon.png",
   "./src/app.js",
+  "./src/api.js",
   "./src/food-data.js",
   "./src/nutrition-core.js",
   "./src/storage.js",
+  "./src/trends.js",
 ];
 
 self.addEventListener("install", (event) => {

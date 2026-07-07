@@ -1,27 +1,35 @@
 # Roll-off-Plan
 
-本仓库包含一个本地优先的营养记录 PWA。它用于记录早餐、午餐、晚餐，自动计算热量、蛋白质、碳水和脂肪，并支持 iPhone Safari 打开后添加到主屏幕。
+本仓库包含一个本地优先的营养记录 PWA。它用于记录早餐、午餐、晚餐和每日体重，自动计算热量、蛋白质、碳水、脂肪，并显示波动图。
+
+手机和电脑访问同一个本地服务时，数据会写入同一个 SQLite 数据库，因此可以同步查看。
 
 ## 运行
 
-在工作区根目录运行：
+在 `营养记录PWA/` 目录运行：
 
 ```powershell
-python -m http.server 8080
+npm start
 ```
 
 电脑打开：
 
 ```text
-http://localhost:8080/营养记录PWA/
+http://localhost:8080/
 ```
 
 iPhone 打开：
 
 1. 让电脑和 iPhone 连接同一个 Wi-Fi。
 2. 在电脑 PowerShell 运行 `ipconfig`，找到无线网卡 IPv4 地址。
-3. iPhone Safari 打开 `http://电脑IPv4地址:8080/营养记录PWA/`。
+3. iPhone Safari 打开 `http://电脑IPv4地址:8080/`。
 4. Safari 分享按钮 -> 添加到主屏幕。
+
+数据保存在电脑本地 SQLite 文件：
+
+```text
+server/nutrition.db
+```
 
 ## 功能
 
@@ -30,16 +38,14 @@ iPhone 打开：
 - 新增自定义食物，填写每 100g 热量、蛋白质、碳水、脂肪。
 - 自动计算每日热量、蛋白质、碳水、脂肪。
 - 显示偏低、合适、偏高。
-- 数据保存在当前浏览器本地。
+- 记录每日体重。
+- 查看体重、热量、蛋白质、碳水、脂肪波动图。
+- 手机和电脑同步查看同一个 SQLite 数据库。
 
 ## 测试
 
 ```powershell
 npm test
+npm run check
 ```
 
-也可以在工作区根目录运行：
-
-```powershell
-node --test 营养记录PWA/tests/nutrition-core.test.mjs
-```

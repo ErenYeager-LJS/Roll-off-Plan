@@ -1,13 +1,30 @@
 import { BUILT_IN_FOODS, DEFAULT_TARGETS, MEAL_LABELS } from "./food-data.js";
-import { loadState, saveState, resetToday } from "./storage.js";
 import {
   calculateEntryMacros,
   emptyDay,
   summarizeDay,
   todayKey,
 } from "./nutrition-core.js";
+import {
+  clearDay,
+  createCustomFood,
+  createEntry,
+  fetchHistory,
+  fetchState,
+  removeEntry,
+  saveWeight,
+} from "./api.js";
+import { drawTrend } from "./trends.js";
 
-let state = loadState();
+let state = {
+  days: {},
+  customFoods: [],
+  targets: DEFAULT_TARGETS,
+  weights: {},
+};
+let currentWeight = null;
+let historyDays = 30;
+let history = [];
 let currentDate = todayKey();
 let activeMeal = "breakfast";
 let selectedFood = BUILT_IN_FOODS[0];
@@ -18,6 +35,8 @@ const elements = {
   dashboard: $("#dashboard"),
   macroGrid: $("#macroGrid"),
   insight: $("#insight"),
+  weightCard: $("#weightCard"),
+  trendCard: $("#trendCard"),
   mealActions: $("#mealActions"),
   mealList: $("#mealList"),
   entrySheet: $("#entrySheet"),
@@ -32,6 +51,16 @@ function dayRecord() {
 
 function allFoods() {
   return [...BUILT_IN_FOODS, ...state.customFoods];
+}
+
+async function loadFromServer() {
+  const serverState = await fetchState(currentDate);
+  state.days[currentDate] = serverState.day || emptyDay();
+  state.customFoods = serverState.customFoods || [];
+  state.targets = serverState.targets || DEFAULT_TARGETS;
+  currentWeight = serverState.weight?.weight || null;
+  history = await fetchHistory(historyDays);
+  render();
 }
 
 function escapeHtml(value) {
@@ -62,9 +91,10 @@ function render() {
   renderDashboard(summary);
   renderMacros(summary);
   renderInsight(summary);
+  renderWeightCard();
+  renderTrendCard();
   renderMealActions();
   renderMealList();
-  saveState(state);
 }
 
 function renderDashboard(summary) {
@@ -134,6 +164,55 @@ function renderInsight(summary) {
     </div>
     <p class="insight-text">${text}</p>
   `;
+}
+
+function renderWeightCard() {
+  elements.weightCard.innerHTML = `
+    <div class="weight-row">
+      <div>
+        <p class="micro-label">今日体重</p>
+        <h2>${currentWeight ? `${formatNumber(currentWeight)} kg` : "未记录"}</h2>
+      </div>
+      <form class="weight-form" id="weightForm">
+        <input class="input weight-input" name="weight" type="number" min="20" max="250" step="0.1" placeholder="91.0" value="${currentWeight || ""}" />
+        <button class="mini-button" type="submit">保存</button>
+      </form>
+    </div>
+  `;
+}
+
+function renderTrendCard() {
+  elements.trendCard.innerHTML = `
+    <div class="trend-head">
+      <div>
+        <p class="micro-label">趋势</p>
+        <h2>波动图</h2>
+      </div>
+      <div class="trend-tabs">
+        <button class="mini-button ${historyDays === 7 ? "active-tab" : ""}" type="button" data-history-days="7">7天</button>
+        <button class="mini-button ${historyDays === 30 ? "active-tab" : ""}" type="button" data-history-days="30">30天</button>
+      </div>
+    </div>
+    <div class="chart-grid">
+      <canvas class="trend-canvas" data-chart="weight" aria-label="体重趋势"></canvas>
+      <canvas class="trend-canvas" data-chart="calories" aria-label="热量趋势"></canvas>
+      <canvas class="trend-canvas" data-chart="protein" aria-label="蛋白质趋势"></canvas>
+      <canvas class="trend-canvas" data-chart="carbs" aria-label="碳水趋势"></canvas>
+      <canvas class="trend-canvas" data-chart="fat" aria-label="脂肪趋势"></canvas>
+    </div>
+  `;
+  const labels = {
+    weight: "体重 kg",
+    calories: "热量 kcal",
+    protein: "蛋白质 g",
+    carbs: "碳水 g",
+    fat: "脂肪 g",
+  };
+  requestAnimationFrame(() => {
+    for (const canvas of elements.trendCard.querySelectorAll("canvas")) {
+      drawTrend(canvas, history, canvas.dataset.chart, labels[canvas.dataset.chart]);
+    }
+  });
 }
 
 function suggestionFor(name, stateName) {
@@ -306,27 +385,29 @@ function openCustomFoodSheet() {
   elements.customFoodSheet.showModal();
 }
 
-function addSelectedEntry() {
+async function addSelectedEntry() {
   const grams = Number($("#gramsInput")?.value);
   if (!Number.isFinite(grams) || grams <= 0) {
     alert("请输入大于 0 的重量。");
     return;
   }
   const macros = calculateEntryMacros({ food: selectedFood, grams });
-  const entry = {
-    id: `entry-${Date.now()}`,
+  await createEntry({
+    date: currentDate,
+    meal: activeMeal,
     foodId: selectedFood.id,
     foodName: selectedFood.name,
     grams,
-    macros,
-    createdAt: new Date().toISOString(),
-  };
-  dayRecord()[activeMeal].push(entry);
+    calories: macros.calories,
+    protein: macros.protein,
+    carbs: macros.carbs,
+    fat: macros.fat,
+  });
   elements.entrySheet.close();
-  render();
+  await loadFromServer();
 }
 
-function addCustomFood(form) {
+async function addCustomFood(form) {
   const data = new FormData(form);
   const name = String(data.get("name") || "").trim();
   const food = {
@@ -345,21 +426,19 @@ function addCustomFood(form) {
     alert("请完整填写有效的营养数据。");
     return;
   }
-  state.customFoods.push(food);
-  saveState(state);
-  selectedFood = food;
+  selectedFood = await createCustomFood(food);
   elements.customFoodSheet.close();
+  await loadFromServer();
   renderEntrySheet("");
 }
 
-function deleteEntry(meal, entryId) {
+async function deleteEntry(meal, entryId) {
   if (!confirm("删除这条记录？")) return;
-  const entries = dayRecord()[meal] || [];
-  dayRecord()[meal] = entries.filter((entry) => entry.id !== entryId);
-  render();
+  await removeEntry(entryId);
+  await loadFromServer();
 }
 
-document.addEventListener("click", (event) => {
+document.addEventListener("click", async (event) => {
   const target = event.target.closest("button");
   if (!target) return;
 
@@ -376,19 +455,25 @@ document.addEventListener("click", (event) => {
     renderEntrySheet($("#foodSearch")?.value || "");
   }
 
-  if (target.dataset.addEntry !== undefined) addSelectedEntry();
+  if (target.dataset.addEntry !== undefined) await addSelectedEntry();
   if (target.dataset.openCustom !== undefined) openCustomFoodSheet();
 
   if (target.dataset.clearToday !== undefined) {
     if (confirm("清空今天的三餐记录？")) {
-      state = resetToday(state, currentDate);
+      await clearDay(currentDate);
       elements.entrySheet.close();
-      render();
+      await loadFromServer();
     }
   }
 
   if (target.dataset.deleteEntry) {
-    deleteEntry(target.dataset.meal, target.dataset.deleteEntry);
+    await deleteEntry(target.dataset.meal, target.dataset.deleteEntry);
+  }
+
+  if (target.dataset.historyDays) {
+    historyDays = Number(target.dataset.historyDays);
+    history = await fetchHistory(historyDays);
+    render();
   }
 });
 
@@ -403,11 +488,20 @@ document.addEventListener("submit", (event) => {
     event.preventDefault();
     addCustomFood(event.target);
   }
+  if (event.target.id === "weightForm") {
+    event.preventDefault();
+    const weight = Number(new FormData(event.target).get("weight"));
+    if (!Number.isFinite(weight) || weight <= 0) {
+      alert("请输入有效体重。");
+      return;
+    }
+    saveWeight(currentDate, weight).then(loadFromServer).catch((error) => alert(error.message));
+  }
 });
 
-elements.todayButton.addEventListener("click", () => {
+elements.todayButton.addEventListener("click", async () => {
   currentDate = todayKey();
-  render();
+  await loadFromServer();
 });
 
 if ("serviceWorker" in navigator) {
@@ -416,4 +510,6 @@ if ("serviceWorker" in navigator) {
   });
 }
 
-render();
+loadFromServer().catch((error) => {
+  elements.insight.innerHTML = `<p class="insight-text">无法连接本地数据库服务：${escapeHtml(error.message)}</p>`;
+});

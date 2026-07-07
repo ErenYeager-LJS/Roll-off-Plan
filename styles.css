@@ -84,6 +84,8 @@ h1 {
 
 .hero-card,
 .insight-card,
+.weight-card,
+.trend-card,
 .meal-card,
 .macro-card,
 .sheet-card {
@@ -206,6 +208,57 @@ h1 {
 .insight-card {
   margin-top: 12px;
   padding: 15px;
+}
+
+.weight-card,
+.trend-card {
+  margin-top: 12px;
+  padding: 15px;
+}
+
+.weight-row,
+.trend-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.weight-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 168px;
+}
+
+.weight-input {
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: 18px;
+}
+
+.trend-tabs {
+  display: flex;
+  gap: 8px;
+}
+
+.mini-button.active-tab {
+  background: var(--yellow);
+  color: #3b2400;
+}
+
+.chart-grid {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.trend-canvas {
+  width: 100%;
+  height: 132px;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: #171410;
 }
 
 .insight-title {
