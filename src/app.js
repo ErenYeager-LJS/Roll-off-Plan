@@ -28,6 +28,8 @@ let history = [];
 let currentDate = todayKey();
 let activeMeal = "breakfast";
 let selectedFood = BUILT_IN_FOODS[0];
+let foodSearchComposing = false;
+let toastTimer = null;
 
 const $ = (selector) => document.querySelector(selector);
 
@@ -84,6 +86,24 @@ function statusClass(stateName) {
   if (stateName === "high") return "status-high";
   if (stateName === "ok") return "status-ok";
   return "status-low";
+}
+
+function showToast(message) {
+  let toast = document.querySelector("[data-toast]");
+  const toastParent = elements.entrySheet.open ? elements.entrySheet : document.body;
+  if (!toast) {
+    toast = document.createElement("div");
+    toast.className = "toast";
+    toast.dataset.toast = "";
+    toast.setAttribute("role", "status");
+    toast.setAttribute("aria-live", "polite");
+  }
+  toastParent.append(toast);
+
+  toast.textContent = message;
+  toast.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove("show"), 1800);
 }
 
 function render() {
@@ -300,15 +320,17 @@ function renderEntrySheet(query = "", options = {}) {
   const foods = allFoods().filter((food) => food.name.includes(query.trim()));
   elements.entrySheet.innerHTML = `
     <div class="sheet-card">
-      <div class="sheet-header">
-        <div>
-          <p class="micro-label">记录${MEAL_LABELS[activeMeal]}</p>
-          <div class="sheet-title">选择食物</div>
+      <div class="sheet-sticky">
+        <div class="sheet-header">
+          <div>
+            <p class="micro-label">记录${MEAL_LABELS[activeMeal]}</p>
+            <div class="sheet-title">选择食物</div>
+          </div>
+          <button class="ghost-button" type="button" data-close-dialog>关闭</button>
         </div>
-        <button class="ghost-button" type="button" data-close-dialog>关闭</button>
-      </div>
 
-      <input class="search-input" id="foodSearch" placeholder="搜索：鸡蛋 / 糙米饭 / 虾仁" value="${escapeHtml(query)}" />
+        <input class="search-input" id="foodSearch" placeholder="搜索：鸡蛋 / 糙米饭 / 虾仁" value="${escapeHtml(query)}" />
+      </div>
 
       <div class="food-list">
         ${foods
@@ -417,6 +439,7 @@ async function addSelectedEntry() {
   });
   await loadFromServer();
   renderEntrySheet(query, { preserveScroll: true });
+  showToast(`已成功添加${selectedFood.name}`);
 }
 
 async function addCustomFood(form) {
@@ -491,6 +514,18 @@ document.addEventListener("click", async (event) => {
 
 document.addEventListener("input", (event) => {
   if (event.target.id === "foodSearch") {
+    if (foodSearchComposing || event.isComposing) return;
+    renderEntrySheet(event.target.value, { focusSearch: true });
+  }
+});
+
+document.addEventListener("compositionstart", (event) => {
+  if (event.target.id === "foodSearch") foodSearchComposing = true;
+});
+
+document.addEventListener("compositionend", (event) => {
+  if (event.target.id === "foodSearch") {
+    foodSearchComposing = false;
     renderEntrySheet(event.target.value, { focusSearch: true });
   }
 });
