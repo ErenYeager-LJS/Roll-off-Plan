@@ -291,11 +291,12 @@ function renderMealList() {
 function openEntrySheet(meal) {
   activeMeal = meal;
   selectedFood = allFoods()[0] || BUILT_IN_FOODS[0];
-  renderEntrySheet("");
+  renderEntrySheet("", { focusSearch: true });
   elements.entrySheet.showModal();
 }
 
-function renderEntrySheet(query = "") {
+function renderEntrySheet(query = "", options = {}) {
+  const previousScrollTop = options.preserveScroll ? elements.entrySheet.querySelector(".sheet-card")?.scrollTop || 0 : 0;
   const foods = allFoods().filter((food) => food.name.includes(query.trim()));
   elements.entrySheet.innerHTML = `
     <div class="sheet-card">
@@ -340,7 +341,17 @@ function renderEntrySheet(query = "") {
       </div>
     </div>
   `;
-  $("#foodSearch")?.focus();
+  if (options.focusSearch) {
+    const searchInput = $("#foodSearch");
+    searchInput?.focus();
+    searchInput?.setSelectionRange(query.length, query.length);
+  }
+  if (options.preserveScroll) {
+    requestAnimationFrame(() => {
+      const sheetCard = elements.entrySheet.querySelector(".sheet-card");
+      if (sheetCard) sheetCard.scrollTop = previousScrollTop;
+    });
+  }
 }
 
 function openCustomFoodSheet() {
@@ -452,7 +463,7 @@ document.addEventListener("click", async (event) => {
   const foodId = target.dataset.selectFood;
   if (foodId) {
     selectedFood = allFoods().find((food) => food.id === foodId) || selectedFood;
-    renderEntrySheet($("#foodSearch")?.value || "");
+    renderEntrySheet($("#foodSearch")?.value || "", { preserveScroll: true });
   }
 
   if (target.dataset.addEntry !== undefined) await addSelectedEntry();
@@ -479,7 +490,7 @@ document.addEventListener("click", async (event) => {
 
 document.addEventListener("input", (event) => {
   if (event.target.id === "foodSearch") {
-    renderEntrySheet(event.target.value);
+    renderEntrySheet(event.target.value, { focusSearch: true });
   }
 });
 
