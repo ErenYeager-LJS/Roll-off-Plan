@@ -391,19 +391,27 @@ h1 {
   margin: 12px 0;
 }
 
-.food-row {
+.food-item {
   width: 100%;
   border: 1px solid var(--line);
   border-radius: 24px;
   background: #171410;
   color: var(--text);
-  padding: 12px;
-  text-align: left;
+  overflow: hidden;
 }
 
-.food-row.active {
+.food-item.active {
   border-color: var(--yellow);
   box-shadow: 0 0 0 4px rgba(251, 191, 36, 0.1);
+}
+
+.food-row {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  padding: 12px;
+  text-align: left;
 }
 
 .category-badge {
@@ -414,14 +422,11 @@ h1 {
   font-size: 11px;
 }
 
-.selected-panel {
+.inline-entry-panel {
   display: grid;
   gap: 10px;
-  margin-top: 12px;
-  padding: 12px;
-  border: 1px solid var(--line);
-  border-radius: 26px;
-  background: #171410;
+  padding: 0 12px 12px;
+  animation: panel-in 140ms ease-out;
 }
 
 .sheet-actions {
@@ -433,6 +438,17 @@ h1 {
 
 .hide {
   display: none !important;
+}
+
+@keyframes panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @media (min-width: 720px) {

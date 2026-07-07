@@ -234,30 +234,25 @@ function renderEntrySheet(query = "") {
         ${foods
           .map(
             (food) => `
-              <button class="food-row ${food.id === selectedFood.id ? "active" : ""}" type="button" data-select-food="${food.id}">
-                <div>
-                  <strong>${escapeHtml(food.name)}</strong>
-                  <p class="food-meta">${food.serving} · 每100g ${food.calories} kcal · 蛋白 ${food.protein}g</p>
+              <div class="food-item ${food.id === selectedFood.id ? "active" : ""}">
+                <button class="food-row" type="button" data-select-food="${food.id}">
+                  <div>
+                    <strong>${escapeHtml(food.name)}</strong>
+                    <p class="food-meta">${food.serving} · 每100g ${food.calories} kcal · 蛋白 ${food.protein}g</p>
+                  </div>
+                  <span class="category-badge">${escapeHtml(food.category || "自定义")}</span>
+                </button>
+                <div class="inline-entry-panel ${food.id === selectedFood.id ? "" : "hide"}">
+                  <label class="form-field">
+                    <span>重量 g/ml</span>
+                    <input class="input" id="gramsInput" type="number" min="1" step="1" value="${food.defaultGrams || 100}" />
+                  </label>
+                  <button class="primary-button" type="button" data-add-entry>添加到${MEAL_LABELS[activeMeal]}</button>
                 </div>
-                <span class="category-badge">${escapeHtml(food.category || "自定义")}</span>
-              </button>
+              </div>
             `,
           )
           .join("")}
-      </div>
-
-      <div class="selected-panel">
-        <div class="food-row" style="cursor:default">
-          <div>
-            <strong>${escapeHtml(selectedFood.name)}</strong>
-            <p class="food-meta">输入本次吃了多少克/ml，系统按每100g数据计算。</p>
-          </div>
-        </div>
-        <label class="form-field">
-          <span>重量 g/ml</span>
-          <input class="input" id="gramsInput" type="number" min="1" step="1" value="${selectedFood.defaultGrams || 100}" />
-        </label>
-        <button class="primary-button" type="button" data-add-entry>添加到${MEAL_LABELS[activeMeal]}</button>
       </div>
 
       <div class="sheet-actions">
